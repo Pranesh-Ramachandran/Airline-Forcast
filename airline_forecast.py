@@ -8,14 +8,14 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 import warnings
 warnings.filterwarnings('ignore')
 
-# Load airline passenger data
+
 def load_data():
     url = 'https://raw.githubusercontent.com/jbrownlee/Datasets/master/airline-passengers.csv'
     df = pd.read_csv(url, parse_dates=['Month'], index_col='Month')
     df.columns = ['Passengers']
     return df
 
-# Test stationarity using ADF test
+
 def test_stationarity(series, title):
     result = adfuller(series.dropna())
     print(f'\n{title}')
@@ -24,7 +24,7 @@ def test_stationarity(series, title):
     print(f'Stationary: {"Yes" if result[1] < 0.05 else "No"}')
     return result[1] < 0.05
 
-# Visualize data and differencing
+
 def plot_series(original, diff1, diff2):
     fig, axes = plt.subplots(3, 1, figsize=(12, 8))
     
@@ -41,7 +41,7 @@ def plot_series(original, diff1, diff2):
     plt.savefig('stationarity_analysis.png')
     plt.show()
 
-# Plot ACF and PACF
+
 def plot_acf_pacf(series):
     fig, axes = plt.subplots(1, 2, figsize=(12, 4))
     plot_acf(series.dropna(), lags=40, ax=axes[0])
@@ -50,7 +50,7 @@ def plot_acf_pacf(series):
     plt.savefig('acf_pacf.png')
     plt.show()
 
-# Evaluate model
+
 def evaluate_model(actual, predicted):
     mse = mean_squared_error(actual, predicted)
     rmse = np.sqrt(mse)
@@ -63,50 +63,50 @@ def evaluate_model(actual, predicted):
     print(f'MAPE: {mape:.2f}%')
     return rmse, mae, mape
 
-# Main pipeline
+
 def main():
     print("="*60)
     print("AIRLINE PASSENGER DEMAND FORECASTING WITH ARIMA")
     print("="*60)
     
-    # Load data
+    
     df = load_data()
     print(f'\nDataset shape: {df.shape}')
     print(f'Date range: {df.index[0]} to {df.index[-1]}')
     
-    # Test stationarity on original series
+    
     test_stationarity(df['Passengers'], 'Original Series - Stationarity Test')
     
-    # Apply differencing
+    
     df['Diff1'] = df['Passengers'].diff()
     df['Diff2'] = df['Diff1'].diff()
     
     test_stationarity(df['Diff1'], 'First Difference - Stationarity Test')
     test_stationarity(df['Diff2'], 'Second Difference - Stationarity Test')
     
-    # Visualize
+    
     plot_series(df['Passengers'], df['Diff1'], df['Diff2'])
     plot_acf_pacf(df['Diff1'])
     
-    # Split data
+   
     train_size = int(len(df) * 0.8)
     train, test = df['Passengers'][:train_size], df['Passengers'][train_size:]
     
     print(f'\nTrain size: {len(train)}, Test size: {len(test)}')
     
-    # Fit ARIMA model
+    
     print('\nFitting ARIMA(2,1,2) model...')
     model = ARIMA(train, order=(2, 1, 2))
     fitted_model = model.fit()
     print(fitted_model.summary())
     
-    # Make predictions
+    
     predictions = fitted_model.forecast(steps=len(test))
     
-    # Evaluate
+    
     evaluate_model(test.values, predictions)
     
-    # Plot results
+    
     plt.figure(figsize=(12, 6))
     plt.plot(train.index, train, label='Train', color='blue')
     plt.plot(test.index, test, label='Actual', color='green')
@@ -120,7 +120,7 @@ def main():
     plt.savefig('forecast_results.png')
     plt.show()
     
-    # Future forecast
+    
     print('\nGenerating 12-month future forecast...')
     future_model = ARIMA(df['Passengers'], order=(2, 1, 2))
     future_fitted = future_model.fit()
@@ -130,7 +130,7 @@ def main():
     for i, val in enumerate(future_forecast, 1):
         print(f'Month {i}: {val:.0f} passengers')
     
-    # Plot future forecast
+    
     plt.figure(figsize=(12, 6))
     plt.plot(df.index, df['Passengers'], label='Historical', color='blue')
     future_dates = pd.date_range(start=df.index[-1], periods=13, freq='MS')[1:]
